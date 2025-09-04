@@ -17,13 +17,51 @@
 {% else %}
 <h3> There is no classes </h3>
 {% endif %}
-<h2>Image is here: </h2>
+<h2>Source image is here:</h2>
 <!-- отображаем загруженное изображение с закругленными углами -->
 <!-- если оно есть (после submit) -->
 {% if image_name %}
 <p>{{image_name}}
-<p><img src={{image_name}} class="img-rounded" alt="My Image" width = 224 height=224 />
+<p><img src={{image_name}} class="img-rounded" alt="Source Image" width = 224 height=224 />
 {% else %}
 <p> There is no image yet </p>
 {% endif %}
+
+{% if hist %}
+    <h2>Histograms:</h2>
+    <div class="row g-2">  <!-- Smaller gap -->
+        {% for name, hh in hist %}
+        <div class="col-xl-2 col-lg-2 col-md-3 col-sm-4 col-5">
+            <div class="text-center p-2 border rounded">
+                <small class="fw-semibold d-block">{{name}}</small>
+                <img src={{hh}} class="img-fluid" alt="{{name}}" style="max-height: 80px;" />
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+{% endif %}
+<h2>Result image is here:</h2>
+{% if result_name %}
+<p>{{result_name}}
+<p><img src={{result_name}} class="img-rounded" alt="Result Image" width = 224 height=224 />
+
+{% if r_hist %}
+    <h2>Histograms:</h2>
+    <div class="row g-2">  <!-- Smaller gap -->
+        {% for name, hh in r_hist %}
+        <div class="col-xl-2 col-lg-2 col-md-3 col-sm-4 col-5">
+            <div class="text-center p-2 border rounded">
+                <small class="fw-semibold d-block">{{name}}</small>
+                <img src={{hh}} class="img-fluid" alt="{{name}}" style="max-height: 80px;" />
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+{% endif %}
+
+{% else %}
+<p> There is no image yet </p>
+{% endif %}
+
+
 {% endblock %}

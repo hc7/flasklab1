@@ -31,7 +31,7 @@ input_shape=None, pooling=None, classes=1000)
 # чтение изображений из каталога
 # учтите, если там есть файлы, не соответствующие изображениям, или каталоги
 # возникнет ошибка
-def read_image_files(files_max_count,dir_name,angle):
+def read_image_files(files_max_count,dir_name):
     files = os.listdir(dir_name)
     print(f"files : {files}")
     files_count = files_max_count
@@ -39,14 +39,14 @@ def read_image_files(files_max_count,dir_name,angle):
         files_count = len(files)
     image_box = [[]]*files_count
     for file_i in range(files_count): # читаем изображения в список
-        image_box[file_i] = Image.open(dir_name+'/'+files[file_i]).convert('RGB').rotate(angle, expand=True, resample=Image.BICUBIC) # / ??
+        image_box[file_i] = Image.open(dir_name+'/'+files[file_i]).convert('RGB')
 
     return files_count, image_box
 
 def read_image_file(file_name,angle):
     print(f"file : {file_name}")
     image_box = []
-    image_box = Image.open(file_name).convert('RGB').rotate(angle, expand=True) # / ??
+    image_box = Image.open(file_name).convert('RGB').rotate(angle, expand=True, resample=Image.BICUBIC) # / ??
 
     return  image_box
 
