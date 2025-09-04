@@ -28,8 +28,8 @@ SECRET_KEY = 'secret'
 app.config['SECRET_KEY'] = SECRET_KEY
 # используем капчу и полученные секретные ключи с сайта Google
 app.config['RECAPTCHA_USE_SSL'] = False
-app.config['RECAPTCHA_PUBLIC_KEY'] = '6Ldcq70rAAAAAIUp2k7W8lDrKbPVo5fjR82nfetG' #'6Ld0O70rAAAAAGiF5PNP8VfteqQBA-RAufUJA8jx'
-app.config['RECAPTCHA_PRIVATE_KEY'] = '6Ldcq70rAAAAAPcm_d-IMskcQVNCUgAytnRekZFJ' #'6Ld0O70rAAAAADWpqM01w6D-bbLSTXzMLHIGSNeL'
+app.config['RECAPTCHA_PUBLIC_KEY'] = '6Ldcq70rAAAAAIUp2k7W8lDrKbPVo5fjR82nfetG'
+app.config['RECAPTCHA_PRIVATE_KEY'] = '6Ldcq70rAAAAAPcm_d-IMskcQVNCUgAytnRekZFJ'
 app.config['RECAPTCHA_OPTIONS'] = {'theme': 'white'}
 # обязательно добавить для работы со стандартными шаблонами
 from flask_bootstrap import Bootstrap
@@ -53,7 +53,7 @@ class NetForm(FlaskForm):
     # поле формы с capture
     recaptcha = RecaptchaField()
 
-    angle = FloatField('Rotation angle (degrees)', validators = [DataRequired(message="Angle is required"),NumberRange(min=-360, max=360, message="Angle must be between -360 and 360 degrees")])
+    angle = FloatField('Rotation angle (degrees)', validators = [NumberRange(min=-360.0, max=360.0, message="Angle must be between -360.0 and 360.0 degrees")])
 
     #кнопка submit, для пользователя отображена как send
     submit = SubmitField('Send')
@@ -67,6 +67,7 @@ import os
 # подключаем наш модуль и переименовываем
 # для исключения конфликта имен
 import net as neuronet
+import hist as make_hist
 # метод обработки запроса GET и POST от клиента
 @app.route("/net",methods=['GET', 'POST'])
 def net():
@@ -75,18 +76,31 @@ def net():
     # обнуляем переменные, передаваемые в форму
     filename=None
     neurodic = {}
+    src_hist=[]
+    resultname=None
+    result_hist = []
     # проверяем нажатие сабмит и валидацию введенных данных
     if form.validate_on_submit():
     # файлы с изображениями читаются из каталога static
         f = form.upload.data
         print(f"source filename : {f.filename}")
-        filename = os.path.join('./static', secure_filename(f.filename))
+        filename = os.path.join('./static',"main_" +  secure_filename(f.filename))
         print(f"filename : {filename}")
         f.save(filename)
+
+        src_hist = make_hist.histo("./static","src",filename)
+        print(f"hist files: {src_hist}")
+
         angle = form.angle.data
         print(f"angle : {angle}")
+
         fimage = neuronet.read_image_file(filename,angle)
-        fimage.save("./static/result.png")
+        #os.makedirs("./static", exist_ok=True)
+        resultname="./static/result.png"
+        fimage.save(resultname)
+
+        result_hist = make_hist.histo("./static","res",resultname)
+        print(f"hist files: {result_hist}")
         # передаем все изображения в каталоге на классификацию
         # можете изменить немного код и передать только загруженный файл
         ## decode = neuronet.getresult(fimage)
@@ -97,7 +111,7 @@ def net():
             #form.upload.data.save(filename)
         # передаем форму в шаблон, так же передаем имя файла и результат работы нейронной
         # сети, если был нажат сабмит, либо передадим falsy значения
-    return render_template('net.html',form=form,image_name="./static/result.png",neurodic=neurodic)
+    return render_template('net.html',form=form,image_name=filename,hist=src_hist,result_name=resultname,r_hist=result_hist)
 
 from flask import request
 from flask import Response
@@ -121,7 +135,7 @@ def apinet():
         # декодируем массив байт base64 в исходный файл изображение
         cfile = base64.b64decode(filebytes)
         # чтобы считать изображение как файл из памяти, используем BytesIO
-        img = Image.open(BytesIO(cfile))
+        img = Image.open(BytesIO(cfile)).convert('RGB')
         decode = neuronet.getresult([img])
         neurodic = {}
         for elem in decode:
@@ -134,9 +148,7 @@ def apinet():
         # преобразуем словарь в json-строку
         ret = json.dumps(neurodic)
         # готовим ответ пользователю
-        resp = Response(response=ret,
-        status=200,
-        mimetype="application/json")
+        resp = Response(response=ret, status=200, mimetype="application/json")
         # возвращаем ответ
         return resp
 
