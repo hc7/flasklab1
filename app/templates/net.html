@@ -5,17 +5,15 @@
 <!-- блок body -->
 {% block content %}
 {{ wtf.quick_form(form, method='post',enctype="multipart/form-data", action="net") }}
-<!-- один из стандартных тегов html – заголовок второго уровня -->
-<h2>Classes: </h2>
 <!—проверяем, есть ли данные классификации -->
 {% if neurodic %}
+<!-- один из стандартных тегов html – заголовок второго уровня -->
+<h2>Classes: </h2>
 <!-- запускаем цикл прохода по словарю и отображаем ключ-значение -->
 <!-- классифицированных файлов -->
 {% for key, value in neurodic.items() %}
 <h3>{{key}}: {{value}}</h3>
 {% endfor %}
-{% else %}
-<h3> There is no classes </h3>
 {% endif %}
 <h2>Source image is here:</h2>
 <!-- отображаем загруженное изображение с закругленными углами -->
@@ -30,11 +28,17 @@
 {% if hist %}
     <h2>Histograms:</h2>
     <div class="row g-2">  <!-- Smaller gap -->
-        {% for name, hh in hist %}
+        <!-- {% for name, hh in hist %}
         <div class="col-xl-2 col-lg-2 col-md-3 col-sm-4 col-5">
             <div class="text-center p-2 border rounded">
-                <!-- <small class="fw-semibold d-block">{{name}}</small> -->
-                <img src={{hh}} class="img-fluid" alt="{{name}}" style="max-height: 224px;" />
+                <img src={{hh}} class="img-fluid rounded" alt="{{name}}" style="max-height: 224px;" />
+            </div>
+        </div>
+        {% endfor %} -->
+        {% for name, hh in hist %}
+        <div class="col-xl-3 col-lg-3 col-md-6 col-sm-12 col-12 mb-4">
+            <div class="text-center">
+                <img src="{{hh}}" class="img-fluid rounded" alt="{{name}}" style="max-height: 224px;">
             </div>
         </div>
         {% endfor %}
@@ -47,12 +51,11 @@
 
 {% if r_hist %}
     <h2>Histograms:</h2>
-    <div class="row g-2">  <!-- Smaller gap -->
+    <div class="row g-2">  
         {% for name, hh in r_hist %}
-        <div class="col-xl-2 col-lg-2 col-md-3 col-sm-4 col-5">
-            <div class="text-center p-2 border rounded">
-                <!-- <small class="fw-semibold d-block">{{name}}</small> -->
-                <img src={{hh}} class="img-fluid" alt="{{name}}" style="max-height: 224px;" />
+        <div class="col-xl-3 col-lg-3 col-md-6 col-sm-12 col-12 mb-4">
+            <div class="text-center">
+                <img src="{{hh}}" class="img-fluid rounded" alt="{{name}}" style="max-height: 224px;">
             </div>
         </div>
         {% endfor %}
