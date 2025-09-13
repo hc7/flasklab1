@@ -31,6 +31,9 @@ app.config['RECAPTCHA_USE_SSL'] = False
 app.config['RECAPTCHA_PUBLIC_KEY'] = '6Ldcq70rAAAAAIUp2k7W8lDrKbPVo5fjR82nfetG'
 app.config['RECAPTCHA_PRIVATE_KEY'] = '6Ldcq70rAAAAAPcm_d-IMskcQVNCUgAytnRekZFJ'
 app.config['RECAPTCHA_OPTIONS'] = {'theme': 'white'}
+
+worker_data = {"requests": 0}
+
 # обязательно добавить для работы со стандартными шаблонами
 from flask_bootstrap import Bootstrap
 
@@ -63,6 +66,58 @@ class NetForm(FlaskForm):
 # для устранения в имени символов типа / и т.д.
 from werkzeug.utils import secure_filename
 import os
+from datetime import datetime
+
+def generate_unique_filename(original_filename):
+    """
+    Generate unique filename to avoid conflicts
+    """
+    # Method 1: UUID + original extension
+    # ext = os.path.splitext(original_filename)[1]
+    # unique_name = f"{uuid.uuid4().hex}{ext}"
+    
+    # Method 2: Timestamp + original name
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
+    unique_name = f"{timestamp}_{original_filename}"
+    
+    # Method 3: UUID + timestamp
+    # unique_name = f"{datetime.now().strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4().hex}{ext}"
+    
+    return unique_name
+
+import os
+import time
+
+def remove_old_files(directory_path, hours=1):
+    """
+    Remove files older than specified hours from directory
+    """
+    current_time = time.time()
+    one_hour_ago = current_time - (hours * 3600)  # 3600 seconds in an hour
+    
+    removed_count = 0
+    error_count = 0
+    
+    for filename in os.listdir(directory_path):
+        file_path = os.path.join(directory_path, filename)
+        
+        # Skip directories, only process files
+        if os.path.isfile(file_path):
+            try:
+                # Get file modification time
+                file_mtime = os.path.getmtime(file_path)
+                
+                # Check if file is older than 1 hour
+                if file_mtime < one_hour_ago:
+                    os.remove(file_path)
+                    print(f"Removed: {filename}")
+                    removed_count += 1
+                    
+            except Exception as e:
+                print(f"Error removing {filename}: {e}")
+                error_count += 1
+    
+    print(f"Removed {removed_count} files, {error_count} errors")
 
 # подключаем наш модуль и переименовываем
 # для исключения конфликта имен
@@ -79,16 +134,22 @@ def net():
     src_hist=[]
     resultname=None
     result_hist = []
+    session_value = request.cookies.get("session")  # or "sessionid"
+    print(f"Session from cookie: {session_value}")
+    worker_data["requests"] += 1
+    print(f"This worker has served {worker_data['requests']} requests.")
     # проверяем нажатие сабмит и валидацию введенных данных
+    remove_old_files("./static", hours=1)
     if form.validate_on_submit():
     # файлы с изображениями читаются из каталога static
         f = form.upload.data
         print(f"source filename : {f.filename}")
-        filename = os.path.join('./static',"main_" +  secure_filename(f.filename))
+        prefix = generate_unique_filename("_")
+        filename = os.path.join('./static',prefix + "main_" +  secure_filename(f.filename))
         print(f"filename : {filename}")
         f.save(filename)
 
-        src_hist = make_hist.histo("./static","src",filename)
+        src_hist = make_hist.histo("./static",prefix + "src",filename)
         print(f"hist files: {src_hist}")
 
         angle = form.angle.data
@@ -96,10 +157,10 @@ def net():
 
         fimage = neuronet.read_image_file(filename,angle)
         #os.makedirs("./static", exist_ok=True)
-        resultname="./static/result.png"
+        resultname="./static/" + prefix + "result.png"
         fimage.save(resultname)
 
-        result_hist = make_hist.histo("./static","res",resultname)
+        result_hist = make_hist.histo("./static",prefix + "res",resultname)
         print(f"hist files: {result_hist}")
         # передаем все изображения в каталоге на классификацию
         # можете изменить немного код и передать только загруженный файл
