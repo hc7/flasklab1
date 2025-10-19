@@ -43,11 +43,20 @@ def read_image_files(files_max_count,dir_name):
 
     return files_count, image_box
 
-def read_image_file(file_name,angle):
+def read_image_file(file_name,angle, shifts):
     print(f"file : {file_name}")
     image_box = []
     image_box = Image.open(file_name).convert('RGB').rotate(angle, expand=True, resample=Image.BICUBIC) # / ??
+    #img = Image.open("example.jpg")
+    arr = np.array(image_box)
 
+    # Shift the image array
+    shifted_arr = np.roll(arr, shifts, (1,0))  # shift right by 50 px
+    #shifted_arr = np.roll(shifted_arr, shift=30, axis=0)  # shift down by 30 px
+
+    # Convert back to image
+    image_box = Image.fromarray(shifted_arr)
+    #shifted_img.show()
     return  image_box
 
 # возвращаем результаты работы нейронной сети

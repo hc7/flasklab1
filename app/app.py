@@ -19,9 +19,9 @@ def data_to():
 
 # модули работы с формами и полями в формах
 from flask_wtf import FlaskForm,RecaptchaField
-from wtforms import StringField, SubmitField, TextAreaField, FloatField
+from wtforms import StringField, SubmitField, TextAreaField, FloatField, IntegerField
 # модули валидации полей формы
-from wtforms.validators import DataRequired, NumberRange
+from wtforms.validators import DataRequired, NumberRange, Optional, Regexp
 from flask_wtf.file import FileField, FileAllowed, FileRequired
 # используем csrf токен, можете генерировать его сами
 SECRET_KEY = 'secret'
@@ -57,7 +57,8 @@ class NetForm(FlaskForm):
     recaptcha = RecaptchaField()
 
     angle = FloatField('Rotation angle (degrees)', validators = [NumberRange(min=-360.0, max=360.0, message="Angle must be between -360.0 and 360.0 degrees")])
-
+    shift_x = IntegerField('Horizontal shift (pixels)', default = 0, validators = [Optional()])
+    shift_y = IntegerField('Vertical shift (pixels)', default = 0, validators = [Optional()])
     #кнопка submit, для пользователя отображена как send
     submit = SubmitField('Send')
 
@@ -155,7 +156,18 @@ def net():
         angle = form.angle.data
         print(f"angle : {angle}")
 
-        fimage = neuronet.read_image_file(filename,angle)
+        # if form.shift_x.flags.optional:
+        #     shift_x = 0
+        # else:
+        shift_x = form.shift_x.data
+        # if form.shift_y.flags.optional:
+        #     shift_y = 0
+        # else:
+        shift_y = form.shift_y.data
+        shifts = (shift_x,shift_y)
+        print(f"shifts : {shifts}")
+
+        fimage = neuronet.read_image_file(filename,angle,shifts)
         #os.makedirs("./static", exist_ok=True)
         resultname="./static/" + prefix + "result.png"
         fimage.save(resultname)
